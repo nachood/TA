@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TE AMO &lt;3</title>
+  <style>
+    :root {
+      --pink: #ff69b4;
+      --hot-pink: #ff1493;
+      --soft-pink: #ffd1e8;
+      --deep: #08050b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: "Arial Black", "Impact", system-ui, sans-serif;
+      background: var(--deep);
+      color: white;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 105, 180, 0.13), transparent 34%),
+        #050308;
+      transition: background 1100ms ease, filter 1100ms ease;
+      cursor: pointer;
+    }
+
+    .stage.is-open {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.38), transparent 22%),
+        radial-gradient(circle at 80% 12%, rgba(255, 20, 147, 0.22), transparent 26%),
+        linear-gradient(135deg, #ff9ccd 0%, #ff5fb1 42%, #ffd1e8 100%);
+      cursor: default;
+    }
+
+    .heart-button {
+      position: relative;
+      width: clamp(116px, 24vw, 220px);
+      aspect-ratio: 1;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      transform: rotate(-45deg);
+      animation: heartbeat 980ms ease-in-out infinite;
+      filter: drop-shadow(0 0 28px rgba(255, 105, 180, 0.75));
+      transition: transform 900ms cubic-bezier(.2, 1.15, .26, 1), filter 900ms ease, opacity 650ms ease;
+      z-index: 5;
+    }
+
+    .heart-button::before,
+    .heart-button::after,
+    .heart-shape {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ff9ccc 0%, #ff4fa7 48%, #ff0f8f 100%);
+      box-shadow: inset -12px -12px 24px rgba(169, 0, 91, 0.2);
+    }
+
+    .heart-shape {
+      border-radius: 14%;
+    }
+
+    .heart-button::before {
+      translate: 0 -50%;
+      border-radius: 50%;
+    }
+
+    .heart-button::after {
+      translate: 50% 0;
+      border-radius: 50%;
+    }
+
+    .stage.is-open .heart-button {
+      transform: rotate(-45deg) scale(14);
+      filter: drop-shadow(0 0 50px rgba(255, 255, 255, 0.8));
+      opacity: 0.18;
+      pointer-events: none;
+      animation: none;
+    }
+
+    .tap-hint {
+      position: absolute;
+      bottom: clamp(28px, 7vh, 72px);
+      left: 50%;
+      translate: -50% 0;
+      width: min(86vw, 420px);
+      text-align: center;
+      font-family: system-ui, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: rgba(255, 221, 239, 0.92);
+      text-shadow: 0 2px 16px rgba(255, 105, 180, 0.65);
+      transition: opacity 450ms ease, transform 450ms ease;
+      z-index: 6;
+    }
+
+    .stage.is-open .tap-hint {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    .love-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 900ms ease 220ms;
+      z-index: 2;
+      pointer-events: none;
+      contain: layout paint;
+    }
+
+    .stage.is-open .love-layer {
+      opacity: 1;
+    }
+
+    .love-text {
+      position: absolute;
+      min-width: max-content;
+      padding: 0.08em 0.24em 0.16em;
+      color: #fff;
+      font-size: clamp(1.55rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      text-transform: uppercase;
+      -webkit-text-stroke: clamp(1px, 0.18vw, 3px) #b60065;
+      text-shadow:
+        0 3px 0 #ff1493,
+        0 8px 16px rgba(122, 0, 78, 0.34);
+      animation: drift var(--duration) ease-in-out infinite alternate;
+      animation-delay: var(--delay);
+      white-space: nowrap;
+      backface-visibility: hidden;
+      will-change: transform;
+    }
+
+    .photo {
+      position: absolute;
+      width: clamp(72px, 14vw, 180px);
+      aspect-ratio: 1;
+      object-fit: cover;
+      border: clamp(3px, 0.7vw, 8px) solid rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(126, 0, 78, 0.24);
+      opacity: 0;
+      animation:
+        photo-fade var(--fade-duration) ease-in-out var(--fade-delay) infinite,
+        bob var(--duration) ease-in-out var(--delay) infinite alternate;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+    }
+
+    .emoji {
+      position: absolute;
+      font-size: clamp(1.8rem, 6vw, 5.2rem);
+      filter: drop-shadow(0 6px 10px rgba(137, 0, 85, 0.22));
+      animation: bounce var(--duration) cubic-bezier(.35, .05, .42, 1.35) infinite alternate;
+      animation-delay: var(--delay);
+      backface-visibility: hidden;
+      will-change: transform;
+    }
+
+    .center-message {
+      position: absolute;
+      inset: auto 0 11vh;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transform: translateY(24px) scale(0.92);
+      transition: opacity 800ms ease 460ms, transform 800ms cubic-bezier(.2, 1.1, .22, 1) 460ms;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .stage.is-open .center-message {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .center-message span {
+      padding: 0.05em 0.3em 0.16em;
+      color: white;
+      font-size: clamp(2.6rem, 11vw, 8rem);
+      line-height: 0.95;
+      text-align: center;
+      -webkit-text-stroke: clamp(1.4px, 0.3vw, 5px) #ba005f;
+      text-shadow:
+        0 5px 0 #ff1493,
+        0 16px 38px rgba(104, 0, 66, 0.4),
+        0 0 24px rgba(255, 255, 255, 0.85);
+      animation: float-title 1800ms ease-in-out infinite alternate;
+    }
+
+    .burst {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 2px, transparent 3px) 0 0 / 42px 42px,
+        radial-gradient(circle, rgba(255, 20, 147, 0.42) 0 2px, transparent 3px) 21px 21px / 52px 52px;
+      transition: opacity 800ms ease 300ms;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .stage.is-open .burst {
+      opacity: 0.62;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { scale: 1; }
+      14% { scale: 1.16; }
+      28% { scale: 0.96; }
+      42% { scale: 1.1; }
+      70% { scale: 1; }
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(0, 0, 0) rotate(var(--tilt));
+      }
+      to {
+        transform: translate3d(var(--move-x), var(--move-y), 0) rotate(calc(var(--tilt) * -1));
+      }
+    }
+
+    @keyframes bob {
+      from {
+        transform: translate3d(0, -12px, 0) rotate(var(--tilt)) scale(0.98);
+      }
+      to {
+        transform: translate3d(var(--move-x), 22px, 0) rotate(calc(var(--tilt) + 8deg)) scale(1.04);
+      }
+    }
+
+    @keyframes photo-fade {
+      0%, 100% {
+        opacity: 0;
+      }
+      18%, 68% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes bounce {
+      from {
+        transform: translate3d(0, 0, 0) rotate(var(--tilt)) scale(0.88);
+      }
+      to {
+        transform: translate3d(var(--move-x), var(--move-y), 0) rotate(calc(var(--tilt) + 20deg)) scale(1.06);
+      }
+    }
+
+    @keyframes float-title {
+      from {
+        transform: translateY(-8px) rotate(-1deg);
+      }
+      to {
+        transform: translateY(8px) rotate(1deg);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .photo {
+        width: clamp(62px, 20vw, 108px);
+      }
+
+      .love-text {
+        font-size: clamp(1.3rem, 8vw, 2.8rem);
+      }
+
+      .center-message {
+        inset: auto 0 13vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage" aria-label="Página de amor interactiva">
+    <div class="burst"></div>
+    <div class="love-layer" id="loveLayer" aria-hidden="true"></div>
+    <button class="heart-button" id="heartButton" aria-label="Abrir sorpresa">
+      <span class="heart-shape"></span>
+    </button>
+    <p class="tap-hint">Toca el corazón</p>
+    <div class="center-message" aria-hidden="true"><span>TE AMO &lt;3</span></div>
+  </main>
+
+  <script>
+    const imageFiles = [
+      "WhatsApp Image 2026-06-20 at 02.30.09.jpeg",
+      "WhatsApp Image 2026-06-20 at 02.30.19.jpeg",
+      "WhatsApp Image 2026-06-20 at 02.30.28.jpeg",
+      "WhatsApp Image 2026-06-20 at 02.30.49.jpeg",
+      "WhatsApp Image 2026-06-20 at 02.31.15.jpeg"
+    ];
+
+    const emojis = ["💖", "💕", "💘", "💞", "😍", "🥰", "🌸", "✨", "💗", "❤️"];
+    const stage = document.querySelector("#stage");
+    const heartButton = document.querySelector("#heartButton");
+    const layer = document.querySelector("#loveLayer");
+    let sceneFragment = null;
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function place(el, left, top) {
+      el.style.left = `${left}%`;
+      el.style.top = `${top}%`;
+      el.style.setProperty("--duration", `${randomBetween(2.4, 5.6).toFixed(2)}s`);
+      el.style.setProperty("--delay", `${randomBetween(-3.5, 0).toFixed(2)}s`);
+      el.style.setProperty("--fade-delay", `${randomBetween(0.05, 0.75).toFixed(2)}s`);
+      el.style.setProperty("--fade-duration", `${randomBetween(4.2, 7.2).toFixed(2)}s`);
+      el.style.setProperty("--tilt", `${randomBetween(-18, 18).toFixed(1)}deg`);
+      el.style.setProperty("--move-x", `${randomBetween(-54, 54).toFixed(0)}px`);
+      el.style.setProperty("--move-y", `${randomBetween(-52, 52).toFixed(0)}px`);
+    }
+
+    function addLoveText(index) {
+      const el = document.createElement("span");
+      el.className = "love-text";
+      el.textContent = "TE AMO <3";
+      place(el, randomBetween(2, 78), randomBetween(4, 86));
+      el.style.zIndex = String(index % 3 === 0 ? 3 : 2);
+      sceneFragment.appendChild(el);
+    }
+
+    function addPhoto(index) {
+      const img = document.createElement("img");
+      img.className = "photo";
+      img.alt = "";
+      img.src = imageFiles[index % imageFiles.length];
+      place(img, randomBetween(1, 88), randomBetween(2, 82));
+      img.decoding = "async";
+      sceneFragment.appendChild(img);
+    }
+
+    function addEmoji(index) {
+      const el = document.createElement("span");
+      el.className = "emoji";
+      el.textContent = emojis[index % emojis.length];
+      place(el, randomBetween(0, 92), randomBetween(0, 88));
+      sceneFragment.appendChild(el);
+    }
+
+    function fillScene() {
+      if (layer.children.length) return;
+
+      const isSmall = matchMedia("(max-width: 560px)").matches;
+      const textCount = isSmall ? 11 : 18;
+      const photoCount = isSmall ? 12 : 24;
+      const emojiCount = isSmall ? 16 : 30;
+
+      sceneFragment = document.createDocumentFragment();
+      for (let i = 0; i < photoCount; i += 1) addPhoto(i);
+      for (let i = 0; i < emojiCount; i += 1) addEmoji(i);
+      for (let i = 0; i < textCount; i += 1) addLoveText(i);
+      layer.appendChild(sceneFragment);
+      sceneFragment = null;
+    }
+
+    function openSurprise() {
+      fillScene();
+      stage.classList.add("is-open");
+      heartButton.setAttribute("aria-label", "Sorpresa abierta");
+    }
+
+    heartButton.addEventListener("click", openSurprise);
+    stage.addEventListener("click", openSurprise, { once: true });
+  </script>
+</body>
+</html>
